@@ -1,3 +1,4 @@
+# New Fork from StreamChat for Roger by MJF.  Only implement minimal Roger changes as needed!
 # Official Flutter packages for [Stream Chat](https://getstream.io/chat/sdk/flutter/)
 
 ![](https://raw.githubusercontent.com/GetStream/stream-chat-flutter/master/images/sdk_hero_v4.png)
