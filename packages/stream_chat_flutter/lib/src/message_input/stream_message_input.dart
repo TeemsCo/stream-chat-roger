@@ -68,6 +68,7 @@ const _kMentionTrigger = '@';
 /// type [StreamChatTheme]. Modify it to change the widget appearance.
 class StreamMessageInput extends StatefulWidget {
   /// Instantiate a new MessageInput
+  /// MJF: Edit this file to make Roger Message Input line with actions.
   const StreamMessageInput({
     super.key,
     this.onMessageSent,
@@ -110,7 +111,28 @@ class StreamMessageInput extends StatefulWidget {
     this.enableMentionsOverlay = true,
     this.onQuotedMessageCleared,
     this.enableActionAnimation = true,
+    // MJF: Roger Inputs added here
+    this.audioRecordWidget,
+    this.onNewLineAction,
+    this.onEnterAction,
+    this.teamsBuilder,
+    this.isMentionsEnabled = false,
   });
+
+  /// Audio record button for Roger app
+  final Widget? audioRecordWidget;
+
+  /// Method to handle new line keypress on desktop platforms
+  final void Function(Intent)? onNewLineAction;
+
+  /// Method to handle enter keypress on desktop platforms
+  final void Function(Intent, List<String>)? onEnterAction;
+
+  /// Builder to display teams available to be mentioned.
+  final Widget Function(String)? teamsBuilder;
+
+  /// Flag to enable or disable the mentioning feature
+  final bool isMentionsEnabled;
 
   /// If true the message input will animate the actions while you type
   final bool enableActionAnimation;
@@ -473,10 +495,16 @@ class StreamMessageInputState extends State<StreamMessageInput>
                         _effectiveFocusNode.unfocus();
                       },
                     ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: _buildTextField(context),
+                  // MJF: Replace _buildTextField with Widget below
+                  _buildTextField(
+                      context,
+                      widget.onNewLineAction,
+                      widget.onEnterAction,
                   ),
+                  // Padding(
+                  //   padding: const EdgeInsets.symmetric(vertical: 8),
+                  //   child: _buildTextField(context),
+                  // ),
                   if (_effectiveController.message.parentId != null &&
                       !widget.hideSendAsDm)
                     Padding(
@@ -525,6 +553,22 @@ class StreamMessageInputState extends State<StreamMessageInput>
             color: _messageInputTheme.inputBackgroundColor,
             child: child,
           );
+          // MJF: This is the code for the Roger Audio Widget.  Don't use yet.
+          // child = Stack(
+          //     children: [
+          //       Material(
+          //         elevation: 8,
+          //         child: child,
+          //       ),
+          //       if (widget.audioRecordWidget != null &&
+          //           _attachments.isEmpty &&
+          //           !_openFilePickerSection)
+          //         Padding(
+          //           padding: const EdgeInsets.only(top: 5),
+          //           child: widget.audioRecordWidget,
+          //         ),
+          //     ],
+          // );
         }
 
         return StreamAutocomplete(
@@ -584,20 +628,53 @@ class StreamMessageInputState extends State<StreamMessageInput>
     );
   }
 
-  Flex _buildTextField(BuildContext context) {
-    return Flex(
-      direction: Axis.horizontal,
-      children: <Widget>[
-        if (!_commandEnabled && widget.actionsLocation == ActionsLocation.left)
-          _buildExpandActionsButton(context),
-        _buildTextInput(context),
-        if (!_commandEnabled && widget.actionsLocation == ActionsLocation.right)
-          _buildExpandActionsButton(context),
-        if (widget.sendButtonLocation == SendButtonLocation.outside)
-          _buildSendButton(context),
-      ],
-    );
-  }
+  // MJF: Replace this with new Widget below.
+  // Flex _buildTextField(BuildContext context) {
+  //   return Flex(
+  //     direction: Axis.horizontal,
+  //     children: <Widget>[
+  //       if (!_commandEnabled && widget.actionsLocation == ActionsLocation.left)
+  //         _buildExpandActionsButton(context),
+  //       _buildTextInput(context),
+  //       if (!_commandEnabled && widget.actionsLocation == ActionsLocation.right)
+  //         _buildExpandActionsButton(context),
+  //       if (widget.sendButtonLocation == SendButtonLocation.outside)
+  //         _buildSendButton(context),
+  //     ],
+  //   );
+  // }
+
+  Widget _buildTextField(
+      BuildContext context,
+      Function(Intent)? onNewLineAction,
+      Function(Intent, List<String>)? onEnterAction,
+      ) =>
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Flex(
+          direction: Axis.horizontal,
+          children: <Widget>[
+            if (!_commandEnabled &&
+                widget.actionsLocation == ActionsLocation.left)
+              _buildExpandActionsButton(context),
+            _buildTextInput(
+              context,
+              onNewLineAction,
+              onEnterAction,
+            ),
+            if (!_commandEnabled &&
+                widget.actionsLocation == ActionsLocation.right)
+              _buildExpandActionsButton(context),
+            if (widget.sendButtonLocation == SendButtonLocation.outside)
+              _buildSendButton(context),
+            // MJF: Remove Audio Button for now.
+            // if (widget.audioRecordWidget != null &&
+            //     _attachments.isEmpty &&
+            //     !_openFilePickerSection)
+            //   const SizedBox(width: 50),
+          ],
+        ),
+      );
 
   Widget _buildSendButton(BuildContext context) {
     if (widget.sendButtonBuilder != null) {
@@ -697,13 +774,21 @@ class StreamMessageInputState extends State<StreamMessageInput>
     }
   }
 
-  Expanded _buildTextInput(BuildContext context) {
+  // MJF: Add more inputs here.
+  // Expanded _buildTextInput(BuildContext context) {
+  Expanded _buildTextInput(
+      BuildContext context,
+      void Function(Intent)? onNewLineAction,
+      void Function(Intent, List<String>)? onEnterAction,
+      ) {
     final margin = (widget.sendButtonLocation == SendButtonLocation.inside
             ? const EdgeInsets.only(right: 8)
             : EdgeInsets.zero) +
         (widget.actionsLocation != ActionsLocation.left || _commandEnabled
             ? const EdgeInsets.only(left: 8)
             : EdgeInsets.zero);
+
+    // final mentionedUsersIds = _mentionedUsers.map((user) => user.id).toList();
 
     return Expanded(
       child: DropTarget(
@@ -787,7 +872,7 @@ class StreamMessageInputState extends State<StreamMessageInput>
                         autofocus: widget.autofocus,
                         textAlignVertical: TextAlignVertical.center,
                         decoration: _getInputDecoration(context),
-                        textCapitalization: widget.textCapitalization,
+                        textCapitalization: TextCapitalization.sentences,
                         autocorrect: widget.autoCorrect,
                       ),
                     ),

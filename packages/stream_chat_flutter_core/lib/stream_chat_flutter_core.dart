@@ -19,3 +19,5 @@ export 'src/stream_message_input_controller.dart';
 export 'src/stream_message_search_list_controller.dart';
 export 'src/stream_user_list_controller.dart';
 export 'src/typedef.dart';
+// Files added to modify Streams for use with Roger...
+export 'src/users_bloc.dart';
